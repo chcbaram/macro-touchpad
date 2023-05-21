@@ -29,10 +29,12 @@
 #define      HW_SWTIMER_MAX_CH      8
 
 #define _USE_HW_GPIO
-#define      HW_GPIO_MAX_CH         2
+#define      HW_GPIO_MAX_CH         3
 
 
 #define _PIN_GPIO_SPK_EN            0
 #define _PIN_GPIO_PWR_EN            1
+#define _PIN_GPIO_LCD_BL            2
+
 
 #endif

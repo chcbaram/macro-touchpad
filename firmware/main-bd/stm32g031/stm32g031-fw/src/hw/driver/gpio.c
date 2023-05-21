@@ -19,6 +19,7 @@ const gpio_tbl_t gpio_tbl[GPIO_MAX_CH] =
     {
         {GPIOB, GPIO_PIN_0 , _DEF_OUTPUT, GPIO_PIN_SET, GPIO_PIN_RESET,   _DEF_HIGH},      // 0. SPK_EN
         {GPIOB, GPIO_PIN_1 , _DEF_OUTPUT, GPIO_PIN_SET, GPIO_PIN_RESET,   _DEF_HIGH},      // 1. PWR_3V3_OFF
+        {GPIOA, GPIO_PIN_7 , _DEF_OUTPUT, GPIO_PIN_SET, GPIO_PIN_RESET,   _DEF_HIGH},      // 2. LCD_BL
     };
 
 
@@ -33,6 +34,7 @@ bool gpioInit(void)
   bool ret = true;
 
 
+  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
 
