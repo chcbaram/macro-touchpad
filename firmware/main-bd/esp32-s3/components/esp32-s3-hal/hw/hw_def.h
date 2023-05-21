@@ -41,7 +41,8 @@
 #define _USE_HW_RTOS
 #define _USE_HW_NVS
 #define _USE_HW_CDC
-
+#define _USE_HW_I2S
+#define _USE_HW_BUZZER
 
 
 #define _USE_HW_UART
@@ -62,7 +63,12 @@
 #define      HW_LOG_BOOT_BUF_MAX    1024
 #define      HW_LOG_LIST_BUF_MAX    1024
 
+#define _USE_HW_MIXER
+#define      HW_MIXER_MAX_CH        8
+#define      HW_MIXER_MAX_BUF_LEN   (16*4*8)
 
+#define _USE_HW_AUDIO
+#define      HW_AUDIO_CMD_MAX_CH    4
 
 
 

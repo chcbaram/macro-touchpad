@@ -37,6 +37,9 @@ bool hwInit(void)
   logPrintf("\n");
 
   nvsInit();
+  i2sInit();
+  audioInit();
+  buzzerInit();
   
   return true;
 }
