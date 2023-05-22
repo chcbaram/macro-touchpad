@@ -84,5 +84,24 @@
 #endif
 
 
+typedef union
+{
+  uint8_t  u8Data[4];
+  uint16_t u16Data[2];
+  uint32_t u32Data;
+
+  int8_t   s8Data[4];
+  int16_t  s16Data[2];
+  int32_t  s32Data;
+
+  uint8_t  u8D;
+  uint16_t u16D;
+  uint32_t u32D;
+
+  int8_t   s8D;
+  int16_t  s16D;
+  int32_t  s32D;
+} data_t;
+
 
 #endif /* SRC_COMMON_DEF_H_ */
