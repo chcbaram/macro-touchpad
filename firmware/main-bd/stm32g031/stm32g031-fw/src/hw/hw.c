@@ -14,6 +14,7 @@ bool hwInit(void)
   ledInit();
   buttonInit();
   gpioInit();
+  i2cInit();
   uartInit();
   uartOpen(_DEF_UART1, 115200);
 
@@ -23,10 +24,7 @@ bool hwInit(void)
   logPrintf("Booting..Ver  \t\t: %s\r\n", _DEF_FIRMWATRE_VERSION);  
   logPrintf("\n");
 
-  delay(3000);
-  gpioPinWrite(_PIN_GPIO_TS_RST, _DEF_LOW);
-  delay(15);
-  gpioPinWrite(_PIN_GPIO_TS_RST, _DEF_HIGH);
-
+  i2cBegin(_DEF_I2C1, 400);
+  
   return true;
 }

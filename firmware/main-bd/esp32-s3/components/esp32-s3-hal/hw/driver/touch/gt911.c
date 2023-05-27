@@ -63,7 +63,7 @@ bool gt911Init(void)
 
   cliAdd("gt911", cliCmd);
 
-  // i2c_addr = 0x5D; 
+  i2c_addr = 0x5D; 
 
 
   return ret;

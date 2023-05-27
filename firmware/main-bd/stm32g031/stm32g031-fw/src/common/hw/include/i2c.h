@@ -36,6 +36,8 @@ uint32_t i2cGetTimeout(uint8_t ch);
 void     i2cClearErrCount(uint8_t ch);
 uint32_t i2cGetErrCount(uint8_t ch);
 
+uint32_t i2cSlaveAvailable(uint8_t ch);
+uint8_t  i2cSlaveRead(uint8_t ch);
 
 #endif
 

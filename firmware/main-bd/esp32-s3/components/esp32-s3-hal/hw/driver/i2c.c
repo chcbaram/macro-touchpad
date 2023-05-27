@@ -455,6 +455,35 @@ void cliI2C(cli_args_t *args)
     ret = true;
   }
 
+  if (args->argc == 5 && args->isStr(0, "reads") == true)
+  {
+    print_ch = (uint16_t) args->getData(1);
+    print_ch = constrain(print_ch, 1, I2C_MAX_CH);
+
+    dev_addr = (uint16_t) args->getData(2);
+    reg_addr = (uint16_t) args->getData(3);
+    length   = (uint16_t) args->getData(4);
+    ch       = print_ch - 1;
+
+    uint8_t rd_buf[length];
+
+    i2c_ret = i2cReadBytes(ch, dev_addr, reg_addr, rd_buf, length, 100);
+
+    for (i=0; i<length; i++)
+    {
+      if (i2c_ret == true)
+      {
+        cliPrintf("%d I2C - 0x%02X : 0x%02X\n", print_ch, reg_addr+i, rd_buf[i]);
+      }
+      else
+      {
+        cliPrintf("%d I2C - Fail \n", print_ch);
+        break;
+      }
+    }
+    ret = true;
+  }
+
   if (args->argc == 5 && args->isStr(0, "write") == true)
   {
     print_ch = (uint16_t) args->getData(1);

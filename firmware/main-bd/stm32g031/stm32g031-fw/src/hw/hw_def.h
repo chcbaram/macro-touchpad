@@ -31,6 +31,10 @@
 #define _USE_HW_GPIO
 #define      HW_GPIO_MAX_CH         4
 
+#define _USE_HW_I2C
+#define      HW_I2C_MAX_CH          1
+
+
 
 #define _PIN_GPIO_SPK_EN            0
 #define _PIN_GPIO_PWR_EN            1

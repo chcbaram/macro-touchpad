@@ -8,7 +8,7 @@
 
 #include "i2c.h"
 #include "cli.h"
-
+#include "qbuffer.h"
 
 
 
@@ -20,6 +20,9 @@ static void cliI2C(cli_args_t *args);
 #endif
 
 
+#define I2C_RX_BUF_LENGTH     32
+
+
 
 static uint32_t i2c_timeout[I2C_MAX_CH];
 static uint32_t i2c_errcount[I2C_MAX_CH];
@@ -29,11 +32,19 @@ static bool is_init = false;
 static bool is_begin[I2C_MAX_CH];
 
 
-I2C_HandleTypeDef hi2c1;
+static I2C_HandleTypeDef hi2c1;
+static DMA_HandleTypeDef hdma_i2c1_rx;
+static DMA_HandleTypeDef hdma_i2c1_tx;
 
 typedef struct
 {
   I2C_HandleTypeDef *p_hi2c;
+  DMA_HandleTypeDef *p_hdma_rx;
+  DMA_HandleTypeDef *p_hdma_tx;
+
+
+  uint8_t  rx_buf[I2C_RX_BUF_LENGTH];
+  qbuffer_t qbuffer;
 
   GPIO_TypeDef *scl_port;
   int           scl_pin;
@@ -42,13 +53,12 @@ typedef struct
   int           sda_pin;
 } i2c_tbl_t;
 
-static i2c_tbl_t i2c_tbl[I2C_MAX_CH] =
-    {
-        { &hi2c1, GPIOB, GPIO_PIN_6,  GPIOB, GPIO_PIN_7},
-    };
+static i2c_tbl_t i2c_tbl[I2C_MAX_CH];
 
 
 static void delayUs(uint32_t us);
+
+
 
 
 
@@ -63,6 +73,14 @@ bool i2cInit(void)
     i2c_errcount[i] = 0;
     is_begin[i] = false;
   }
+
+  i2c_tbl[0].p_hi2c   = &hi2c1;
+  i2c_tbl[0].scl_port = GPIOB;
+  i2c_tbl[0].scl_pin  = GPIO_PIN_6;
+  i2c_tbl[0].sda_port = GPIOB;
+  i2c_tbl[0].sda_pin  = GPIO_PIN_7;
+
+
 
 #ifdef _USE_HW_CLI
   cliAdd("i2c", cliI2C);
@@ -93,21 +111,31 @@ bool i2cBegin(uint8_t ch, uint32_t freq_khz)
   {
     case _DEF_I2C1:
       i2c_freq[ch] = freq_khz;
-
+      
       p_handle->Instance             = I2C1;
-      p_handle->Init.Timing          = 0x00D049FB;
-      p_handle->Init.OwnAddress1     = 0x00;
+      p_handle->Init.Timing          = 0x00602173;
+      p_handle->Init.OwnAddress1     = 0x0B<<1;
       p_handle->Init.AddressingMode  = I2C_ADDRESSINGMODE_7BIT;
       p_handle->Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
       p_handle->Init.OwnAddress2     = 0x00;
-      p_handle->Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+      p_handle->Init.OwnAddress2Masks= I2C_OA2_NOMASK;
+      p_handle->Init.GeneralCallMode = I2C_GENERALCALL_ENABLE;
       p_handle->Init.NoStretchMode   = I2C_NOSTRETCH_DISABLE;
+
+  
+      i2c_tbl[ch].p_hdma_rx          = &hdma_i2c1_rx;
+
+
+      qbufferCreate(&i2c_tbl[ch].qbuffer, &i2c_tbl[ch].rx_buf[0], I2C_RX_BUF_LENGTH);
 
       i2cReset(ch);
 
       HAL_I2C_DeInit(p_handle);
       if(HAL_I2C_Init(p_handle) != HAL_OK)
       {
+        ret = false;
+        is_begin[ch] = false;
+        break;
       }
 
       /* Enable the Analog I2C Filter */
@@ -115,6 +143,14 @@ bool i2cBegin(uint8_t ch, uint32_t freq_khz)
 
       /* Configure Digital filter */
       HAL_I2CEx_ConfigDigitalFilter(p_handle, 0);
+
+      // if(HAL_I2C_Slave_Receive_DMA(i2c_tbl[ch].p_hi2c, (uint8_t *)&i2c_tbl[ch].rx_buf[0], I2C_RX_BUF_LENGTH) != HAL_OK)
+      // {
+      //   ret = false;
+      // }
+
+      HAL_I2C_EnableListen_IT(p_handle);
+
 
       ret = true;
       is_begin[ch] = true;
@@ -138,7 +174,7 @@ void i2cReset(uint8_t ch)
   GPIO_InitStruct.Pin       = p_pin->scl_pin;
   GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull      = GPIO_NOPULL;
-  GPIO_InitStruct.Speed     = GPIO_SPEED_HIGH;
+  GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(p_pin->scl_port, &GPIO_InitStruct);
 
   GPIO_InitStruct.Pin       = p_pin->sda_pin;
@@ -192,6 +228,36 @@ bool i2cRecovery(uint8_t ch)
 
   ret = i2cBegin(ch, i2c_freq[ch]);
 
+  return ret;
+}
+
+uint32_t i2cSlaveAvailable(uint8_t ch)
+{
+  uint32_t ret = 0;
+
+  if (is_begin[ch] != true) return 0;
+  
+  switch(ch)
+  {
+    case _DEF_I2C1:
+      i2c_tbl[ch].qbuffer.in = (i2c_tbl[ch].qbuffer.len - ((DMA_Channel_TypeDef *)i2c_tbl[ch].p_hdma_rx->Instance)->CNDTR);
+      ret = qbufferAvailable(&i2c_tbl[ch].qbuffer);      
+      break;
+  }
+
+  return ret;
+}
+
+uint8_t i2cSlaveRead(uint8_t ch)
+{
+  uint8_t ret = 0;
+
+  switch(ch)
+  {
+    case _DEF_I2C1:
+      qbufferRead(&i2c_tbl[ch].qbuffer, &ret, 1);
+      break;
+  }
   return ret;
 }
 
@@ -336,30 +402,135 @@ void delayUs(uint32_t us)
   }
 }
 
+__weak void i2cReadCallback(uint8_t addr, uint8_t *p_data)
+{
+}
+
+__weak void i2cWriteCallback(uint8_t addr, uint8_t *p_data)
+{
+  
+}
+
+typedef enum
+{
+  I2C_CMD_IDLE,
+  I2C_CMD_GET_ADDR, 
+  I2C_CMD_WR_DATA,
+  I2C_CMD_RD_DATA,
+} i2c_cmd_t;
+
+
+volatile i2c_cmd_t i2c_cmd_state = I2C_CMD_IDLE;
 
 
 
+static uint8_t i2c_rx_buf[2];
+static uint8_t i2c_tx_buf[2];
+
+uint8_t i2c_cmd_addr = 0;
+
+
+void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode)
+{
+  switch(TransferDirection)
+  {
+    case I2C_DIRECTION_TRANSMIT:   
+      i2c_cmd_state = I2C_CMD_GET_ADDR;
+      HAL_I2C_Slave_Seq_Receive_DMA(hi2c, i2c_rx_buf, 1, I2C_FIRST_FRAME);
+      break;
+
+    case I2C_DIRECTION_RECEIVE:
+      i2c_cmd_state = I2C_CMD_RD_DATA;
+      i2cReadCallback(i2c_cmd_addr, i2c_tx_buf);
+      i2c_cmd_addr++;
+      HAL_I2C_Slave_Seq_Transmit_DMA(hi2c, i2c_tx_buf, 1, I2C_NEXT_FRAME);
+      break;
+  }
+}
+
+void HAL_I2C_ListenCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+  HAL_I2C_EnableListen_IT(hi2c);
+}
 
 void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 {
-  UNUSED(hi2c);
-
+  if (hi2c->ErrorCode > 0)
+  {
+    return;
+  }
 }
 
+void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+  switch(i2c_cmd_state)
+  {
+    case I2C_CMD_GET_ADDR:
+      i2c_cmd_addr = i2c_rx_buf[0];
+      i2c_cmd_state = I2C_CMD_WR_DATA;
+      HAL_I2C_Slave_Seq_Receive_DMA(hi2c, i2c_rx_buf, 1, I2C_FIRST_FRAME);
+      break;
+
+    case I2C_CMD_WR_DATA:
+      i2cWriteCallback(i2c_cmd_addr, i2c_rx_buf);
+      HAL_I2C_Slave_Seq_Receive_DMA(hi2c, i2c_rx_buf, 1, I2C_LAST_FRAME);    
+      break;
+
+    default:
+      break;
+  }
+}
+
+void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+  switch(i2c_cmd_state)
+  {
+    case I2C_CMD_RD_DATA:
+      i2cReadCallback(i2c_cmd_addr, i2c_tx_buf);
+      i2c_cmd_addr++;
+      HAL_I2C_Slave_Seq_Transmit_DMA(hi2c, i2c_tx_buf, 1, I2C_NEXT_FRAME);
+      break;
+
+    default:
+      break;
+  }
+}
+
+void HAL_I2C_AbortCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+  return;
+}
+
+void I2C1_IRQHandler(void)
+{
+  if (hi2c1.Instance->ISR & (I2C_FLAG_BERR | I2C_FLAG_ARLO | I2C_FLAG_OVR)) 
+  {
+    HAL_I2C_ER_IRQHandler(&hi2c1);
+  } 
+  else 
+  {
+    HAL_I2C_EV_IRQHandler(&hi2c1);
+  }
+}
+
+void DMA1_Channel2_3_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_i2c1_rx);
+  HAL_DMA_IRQHandler(&hdma_i2c1_tx);  
+}
 
 void HAL_I2C_MspInit(I2C_HandleTypeDef* i2cHandle)
 {
-
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   if(i2cHandle->Instance==I2C1)
   {
-  /** Initializes the peripherals clock
+  /** Initializes the peripherals clocks
   */
-    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
-    PeriphClkInitStruct.I2c123ClockSelection = RCC_I2C1235CLKSOURCE_D2PCLK1;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
+    PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
     {
       Error_Handler();
     }
@@ -373,18 +544,58 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* i2cHandle)
     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
+    GPIO_InitStruct.Alternate = GPIO_AF6_I2C1;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-
-    /* I2C2 clock enable */
+    /* I2C1 clock enable */
     __HAL_RCC_I2C1_CLK_ENABLE();
 
-    /* I2C2 interrupt Init */
-    HAL_NVIC_SetPriority(I2C1_EV_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
-    HAL_NVIC_SetPriority(I2C1_ER_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
+    __HAL_RCC_DMA1_CLK_ENABLE();
+
+    /* I2C1 DMA Init */
+    /* I2C1_RX Init */
+    hdma_i2c1_rx.Instance = DMA1_Channel2;
+    hdma_i2c1_rx.Init.Request = DMA_REQUEST_I2C1_RX;
+    hdma_i2c1_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_i2c1_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_i2c1_rx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_i2c1_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_i2c1_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_i2c1_rx.Init.Mode = DMA_NORMAL;
+    hdma_i2c1_rx.Init.Priority = DMA_PRIORITY_LOW;
+    if (HAL_DMA_Init(&hdma_i2c1_rx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(i2cHandle,hdmarx,hdma_i2c1_rx);
+
+
+    /* I2C1_TX Init */
+    hdma_i2c1_tx.Instance = DMA1_Channel3;
+    hdma_i2c1_tx.Init.Request = DMA_REQUEST_I2C1_TX;
+    hdma_i2c1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_i2c1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_i2c1_tx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_i2c1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_i2c1_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_i2c1_tx.Init.Mode = DMA_NORMAL;
+    hdma_i2c1_tx.Init.Priority = DMA_PRIORITY_LOW;
+    if (HAL_DMA_Init(&hdma_i2c1_tx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(i2cHandle,hdmatx,hdma_i2c1_tx);
+
+
+    /* I2C1 interrupt Init */
+    HAL_NVIC_SetPriority(I2C1_IRQn, 3, 0);
+    HAL_NVIC_EnableIRQ(I2C1_IRQn);
+
+    /* DMA1_Channel2_3_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA1_Channel2_3_IRQn, 3, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);    
   }
 }
 
@@ -404,9 +615,8 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* i2cHandle)
 
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_7);
 
-    /* I2C2 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(I2C1_EV_IRQn);
-    HAL_NVIC_DisableIRQ(I2C1_ER_IRQn);
+    /* I2C1 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(I2C1_IRQn);
   }
 }
 
