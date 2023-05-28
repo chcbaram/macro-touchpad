@@ -15,7 +15,8 @@ typedef struct
 
 button_tbl_t button_tbl[BUTTON_MAX_CH] =
     {
-        {GPIOC, GPIO_PIN_6, GPIO_PIN_RESET},
+        {GPIOC, GPIO_PIN_6, GPIO_PIN_RESET},    // POWER_BTN
+        {GPIOA, GPIO_PIN_8, GPIO_PIN_SET  },    // TOUCH_OUT
     };
 
 
@@ -30,8 +31,8 @@ bool buttonInit(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
 
+  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
-
 
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;

@@ -1,6 +1,6 @@
 #include "ap.h"
 #include "thread/power.h"
-
+#include "thread/i2c_dev.h"
 
 
 
@@ -33,6 +33,7 @@ void apMain(void)
     }
 
     powerUpdate();
+    i2cDevUpdate();
  }
 }
 

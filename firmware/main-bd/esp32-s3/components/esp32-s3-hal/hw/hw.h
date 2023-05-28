@@ -34,7 +34,7 @@ extern "C" {
 #include "lcd.h"
 #include "lvgl.h"
 #include "jpegd.h"
-
+#include "i2c_exp.h"
 
 bool hwInit(void);
 

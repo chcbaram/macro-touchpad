@@ -5,7 +5,7 @@
 #include "ap_def.h"
 
 
-bool i2cDeviceInit(void);
-
+bool i2cDevInit(void);
+void i2cDevUpdate(void);
 
 #endif

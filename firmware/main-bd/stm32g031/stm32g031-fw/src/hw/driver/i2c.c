@@ -421,13 +421,18 @@ typedef enum
 
 
 volatile i2c_cmd_t i2c_cmd_state = I2C_CMD_IDLE;
-
+volatile bool i2c_cmd_done = false;
 
 
 static uint8_t i2c_rx_buf[2];
 static uint8_t i2c_tx_buf[2];
 
 uint8_t i2c_cmd_addr = 0;
+
+#ifdef I2C_SEQ_DEBUG
+uint8_t i2c_seq_buf[16];
+uint8_t i2c_seq_i;
+#endif
 
 
 void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode)
@@ -437,6 +442,12 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, ui
     case I2C_DIRECTION_TRANSMIT:   
       i2c_cmd_state = I2C_CMD_GET_ADDR;
       HAL_I2C_Slave_Seq_Receive_DMA(hi2c, i2c_rx_buf, 1, I2C_FIRST_FRAME);
+      i2c_cmd_done = false;
+      #ifdef I2C_SEQ_DEBUG
+      i2c_seq_i = 0;
+      memset(i2c_seq_buf, 0, sizeof(i2c_seq_buf));
+      i2c_seq_buf[i2c_seq_i++] = 1;
+      #endif
       break;
 
     case I2C_DIRECTION_RECEIVE:
@@ -444,21 +455,36 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, ui
       i2cReadCallback(i2c_cmd_addr, i2c_tx_buf);
       i2c_cmd_addr++;
       HAL_I2C_Slave_Seq_Transmit_DMA(hi2c, i2c_tx_buf, 1, I2C_NEXT_FRAME);
+      #ifdef I2C_SEQ_DEBUG
+      i2c_seq_buf[i2c_seq_i++] = 2;
+      #endif
       break;
   }
 }
 
 void HAL_I2C_ListenCpltCallback(I2C_HandleTypeDef *hi2c)
 {
+  i2c_cmd_done = true;
   HAL_I2C_EnableListen_IT(hi2c);
+
+  #ifdef I2C_SEQ_DEBUG
+  i2c_seq_buf[i2c_seq_i++] = 8;
+  #endif
 }
 
 void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 {
-  if (hi2c->ErrorCode > 0)
+  if (hi2c->ErrorCode & HAL_I2C_ERROR_AF)
+  {
+    #ifdef I2C_SEQ_DEBUG
+    i2c_seq_buf[i2c_seq_i++] = 3;
+    #endif
+  }
+  else if (hi2c->ErrorCode > 0)
   {
     return;
   }
+
 }
 
 void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
@@ -469,11 +495,19 @@ void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
       i2c_cmd_addr = i2c_rx_buf[0];
       i2c_cmd_state = I2C_CMD_WR_DATA;
       HAL_I2C_Slave_Seq_Receive_DMA(hi2c, i2c_rx_buf, 1, I2C_FIRST_FRAME);
+      
+      #ifdef I2C_SEQ_DEBUG
+      i2c_seq_buf[i2c_seq_i++] = 4;
+      #endif
       break;
 
     case I2C_CMD_WR_DATA:
       i2cWriteCallback(i2c_cmd_addr, i2c_rx_buf);
       HAL_I2C_Slave_Seq_Receive_DMA(hi2c, i2c_rx_buf, 1, I2C_LAST_FRAME);    
+
+      #ifdef I2C_SEQ_DEBUG
+      i2c_seq_buf[i2c_seq_i++] = 5;
+      #endif
       break;
 
     default:
@@ -483,12 +517,19 @@ void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
 
 void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
+  if (i2c_cmd_done == true)
+    return;
+
   switch(i2c_cmd_state)
   {
     case I2C_CMD_RD_DATA:
       i2cReadCallback(i2c_cmd_addr, i2c_tx_buf);
       i2c_cmd_addr++;
       HAL_I2C_Slave_Seq_Transmit_DMA(hi2c, i2c_tx_buf, 1, I2C_NEXT_FRAME);
+
+      #ifdef I2C_SEQ_DEBUG
+      i2c_seq_buf[i2c_seq_i++] = 6;
+      #endif
       break;
 
     default:
@@ -594,7 +635,7 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* i2cHandle)
     HAL_NVIC_EnableIRQ(I2C1_IRQn);
 
     /* DMA1_Channel2_3_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Channel2_3_IRQn, 3, 0);
+    HAL_NVIC_SetPriority(DMA1_Channel2_3_IRQn, 2, 0);
     HAL_NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);    
   }
 }

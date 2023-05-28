@@ -38,7 +38,9 @@ bool hwInit(void)
 
   nvsInit();
   i2cInit();
+  i2cExpInit();
   i2sInit();
+  gpioInit();
   audioInit();
   buzzerInit();
   gt911Init();

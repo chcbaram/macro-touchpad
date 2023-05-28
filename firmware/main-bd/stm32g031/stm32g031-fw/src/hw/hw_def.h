@@ -23,23 +23,23 @@
 #define      HW_LOG_CH              _DEF_UART1
 
 #define _USE_HW_BUTTON
-#define      HW_BUTTON_MAX_CH       1
+#define      HW_BUTTON_MAX_CH       2
 
 #define _USE_HW_SWTIMER
 #define      HW_SWTIMER_MAX_CH      8
 
 #define _USE_HW_GPIO
-#define      HW_GPIO_MAX_CH         4
+#define      HW_GPIO_MAX_CH         5
 
 #define _USE_HW_I2C
 #define      HW_I2C_MAX_CH          1
-
 
 
 #define _PIN_GPIO_SPK_EN            0
 #define _PIN_GPIO_PWR_EN            1
 #define _PIN_GPIO_LCD_BL            2
 #define _PIN_GPIO_TS_RST            3
+#define _PIN_GPIO_CHARGE_FLAG       4
 
 
 #endif

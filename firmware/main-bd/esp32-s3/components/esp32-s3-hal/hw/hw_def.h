@@ -45,6 +45,7 @@
 #define _USE_HW_BUZZER
 #define _USE_HW_GT911
 #define _USE_HW_LCDC
+#define _USE_HW_I2C_EXP
 
 
 #define _USE_HW_UART
@@ -75,6 +76,8 @@
 #define _USE_HW_I2C
 #define      HW_I2C_MAX_CH          1
 
+#define _USE_HW_GPIO
+#define      HW_GPIO_MAX_CH         6
 
 
-#endif /* MAIN_HW_HW_DEF_H_ */
+#endif 
