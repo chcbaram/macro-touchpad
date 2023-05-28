@@ -79,5 +79,14 @@
 #define _USE_HW_GPIO
 #define      HW_GPIO_MAX_CH         6
 
+#define _USE_HW_ST7701
+#define      HW_ST7701_WIDTH       480
+#define      HW_ST7701_HEIGHT      480
+
+#define _USE_HW_LCD
+// #define      HW_LCD_LVGL            0
+// #define      HW_LCD_LOGO            0
+#define      HW_LCD_WIDTH           HW_ST7701_WIDTH
+#define      HW_LCD_HEIGHT          HW_ST7701_HEIGHT
 
 #endif 

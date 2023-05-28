@@ -6,10 +6,12 @@
 
 
 
-
 void apInit(void)
 {
+  i2cDevInit();
+
   logBoot(false);
+  return;
 }
 
 void apMain(void)

@@ -15,6 +15,7 @@ bool hwInit(void)
   buttonInit();
   gpioInit();
   i2cInit();
+  spiInit();
   uartInit();
   uartOpen(_DEF_UART1, 115200);
 
@@ -25,6 +26,9 @@ bool hwInit(void)
   logPrintf("\n");
 
   i2cBegin(_DEF_I2C1, 400);
-  
+
+  spiBegin(_DEF_SPI1);
+  spiSetDataMode(_DEF_SPI1, SPI_MODE0);
+
   return true;
 }

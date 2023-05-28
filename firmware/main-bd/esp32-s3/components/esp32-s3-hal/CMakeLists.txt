@@ -3,6 +3,7 @@ file(GLOB SRC_FILES
   hw/*.c
   hw/driver/*.c
   hw/driver/touch/*.c
+  hw/driver/lcd/*.c
 )
 
 file(GLOB_RECURSE SRC_FILES_RECURSE
