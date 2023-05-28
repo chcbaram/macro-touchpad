@@ -22,7 +22,7 @@
 #define _HW_DEF_RTOS_THREAD_PRI_CLI           5
 #define _HW_DEF_RTOS_THREAD_PRI_BUTTON        5
 #define _HW_DEF_RTOS_THREAD_PRI_SD            5
-#define _HW_DEF_RTOS_THREAD_PRI_TE            5
+#define _HW_DEF_RTOS_THREAD_PRI_LCD           5
 #define _HW_DEF_RTOS_THREAD_PRI_GT911         5
 #define _HW_DEF_RTOS_THREAD_PRI_I2S           5
 #define _HW_DEF_RTOS_THREAD_PRI_AUDIO         5
@@ -32,7 +32,7 @@
 #define _HW_DEF_RTOS_THREAD_MEM_CLI           (8*1024)
 #define _HW_DEF_RTOS_THREAD_MEM_BUTTON        (1*1024)
 #define _HW_DEF_RTOS_THREAD_MEM_SD            (4*1024)
-#define _HW_DEF_RTOS_THREAD_MEM_TE            (2*1024)
+#define _HW_DEF_RTOS_THREAD_MEM_LCD           (2*1024)
 #define _HW_DEF_RTOS_THREAD_MEM_GT911         (4*1024)
 #define _HW_DEF_RTOS_THREAD_MEM_I2S           (4*1024)
 #define _HW_DEF_RTOS_THREAD_MEM_AUDIO         (8*1024)
@@ -46,6 +46,7 @@
 #define _USE_HW_GT911
 #define _USE_HW_LCDC
 #define _USE_HW_I2C_EXP
+#define _USE_HW_LVGL
 
 
 #define _USE_HW_UART
@@ -76,17 +77,26 @@
 #define _USE_HW_I2C
 #define      HW_I2C_MAX_CH          1
 
+#define _USE_HW_TOUCH
+#define      HW_TOUCH_MAX_CH        5
+
 #define _USE_HW_GPIO
 #define      HW_GPIO_MAX_CH         6
+
+#define _USE_HW_LCDC
 
 #define _USE_HW_ST7701
 #define      HW_ST7701_WIDTH       480
 #define      HW_ST7701_HEIGHT      480
 
 #define _USE_HW_LCD
-// #define      HW_LCD_LVGL            0
-// #define      HW_LCD_LOGO            0
+#define      HW_LCD_LVGL            1
+#define      HW_LCD_LOGO            1
 #define      HW_LCD_WIDTH           HW_ST7701_WIDTH
 #define      HW_LCD_HEIGHT          HW_ST7701_HEIGHT
+
+
+#define _PIN_GPIO_LCD_BLK           5
+
 
 #endif 

@@ -3,11 +3,14 @@ file(GLOB SRC_FILES
   hw/*.c
   hw/driver/*.c
   hw/driver/touch/*.c
+  hw/driver/hangul/*.c
+  hw/driver/lvgl/*.c
   hw/driver/lcd/*.c
 )
 
 file(GLOB_RECURSE SRC_FILES_RECURSE
   common/*.c 
+  lib/lvgl/*.c
 )
 
 
@@ -20,6 +23,7 @@ set(requires
   "esp_adc"
   "app_update"
   "esp_hid"
+  "esp_lcd"
   )
 
 

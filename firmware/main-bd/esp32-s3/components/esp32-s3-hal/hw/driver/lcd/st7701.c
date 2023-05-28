@@ -19,8 +19,6 @@ bool st7701Init(void)
 
   ret = st7701Reset();
 
-  logPrintf("[%s] st7701Init()\n", ret ? "OK":"NG");
-
   is_init = ret;
   return ret;
 }
@@ -53,7 +51,7 @@ bool st7701InitRegs(void)
   st7701WriteData(0x31);
   st7701WriteData(0x05);
 
-  st7701WriteCmd(0xCd);
+  st7701WriteCmd(0xCD);
   st7701WriteData(0x08);
 
   st7701WriteCmd(0xB0);    
@@ -250,11 +248,12 @@ bool st7701InitRegs(void)
   st7701WriteData(0x00);
   st7701WriteData(0x00);
 
+
   st7701WriteCmd(0x3A);   //0x70 RGB888, 0x60 RGB666, 0x50 RGB565
   st7701WriteData(0x60);
 
-  //st7701WriteCmd(0x21);   //Display Inversion On
-  st7701WriteCmd(0x22);   //Display Inversion Off
+  st7701WriteCmd(0x21);   //Display Inversion On
+
 
   st7701WriteCmd(0x11);   //Sleep Out
   delay(100);
@@ -263,7 +262,6 @@ bool st7701InitRegs(void)
 
   ret = st7701WriteCmd(0x29);   //Display On
   delay(50);
-
 
   return ret;
 }
@@ -280,6 +278,6 @@ bool st7701WriteData(uint8_t data)
 {
   bool ret;
 
-  ret = i2cExpWrite(I2C_REG_LCD_WR_CMD, &data, 1);
+  ret = i2cExpWrite(I2C_REG_LCD_WR_DAT, &data, 1);
   return ret;
 }

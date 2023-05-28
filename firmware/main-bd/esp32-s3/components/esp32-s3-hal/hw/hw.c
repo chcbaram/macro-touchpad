@@ -10,7 +10,7 @@
 
 #include "hw.h"
 #include "touch/gt911.h"
-#include "lcd/st7701.h"
+
 
 static void bootMsg(void);
 
@@ -45,7 +45,7 @@ bool hwInit(void)
   audioInit();
   buzzerInit();
   gt911Init();
-  st7701Init();
+  lcdInit();
 
   return true;
 }
