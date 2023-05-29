@@ -106,7 +106,7 @@ bool lcdInit(void)
 
   lcdcSetCallBack(lcdTransferDoneISR);
 
-  ret = lcdcBegin(LCD_WIDTH, LCD_HEIGHT, 16, 10);
+  ret = lcdcBegin(LCD_WIDTH, LCD_HEIGHT, 16, 12);
   logPrintf("[%s] lcdcBegin()\n", ret ? "OK":"NG");
 
   if (ret != true)
@@ -161,24 +161,21 @@ static void lcdThread(void* arg)
   {
     if(xQueueReceive(lcd_event.evt_queue_vsync, NULL, portMAX_DELAY)) 
     {
+      draw_frame_time = millis() - draw_pre_time;
+      draw_pre_time = millis();
+
       if (is_request_draw == true)
       {
-        uint16_t *p_frame_buffer;
         uint32_t index;
 
         index = lcd_frame.index;
-        p_frame_buffer = lcdGetFrameBuffer();
         lcdSwapFrameBuffer();
         is_request_draw = false;
 
-        lcdcRefreshFrameBuffer(p_frame_buffer);
-
-        draw_pre_time = millis();
         lcd_frame.is_done[index] = true;        
 
         fps_time = millis() - fps_pre_time;
         fps_pre_time = millis();
-        draw_frame_time = millis() - draw_pre_time;
 
         if (fps_time > 0)
         {
@@ -269,6 +266,8 @@ bool lcdRequestDraw(void)
   lcd_frame.is_done[lcd_frame.index] = false;
   is_request_draw = true;
 
+  lcdcRefreshFrameBuffer(lcdGetFrameBuffer());
+
   return true;
 }
 
@@ -317,7 +316,7 @@ uint16_t *lcdGetCurrentFrameBuffer(void)
   return (uint16_t *)lcd_frame.buffer[lcd_frame.index^1];
 }
 
-LCD_OPT_DEF void lcdClearBuffer(uint32_t rgb_code)
+LCD_OPT_DEF IRAM_ATTR void lcdClearBuffer(uint32_t rgb_code)
 {
   uint16_t *p_buf = lcdGetFrameBuffer();
 
@@ -576,7 +575,7 @@ int32_t lcdGetHeight(void)
 }
 
 
-void lcdDrawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color)
+LCD_OPT_DEF IRAM_ATTR void lcdDrawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color)
 {
   int16_t steep = abs(y1 - y0) > abs(x1 - x0);
 
@@ -630,7 +629,7 @@ void lcdDrawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color)
   }
 }
 
-void lcdDrawLineBuffer(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color, lcd_pixel_t *line)
+LCD_OPT_DEF IRAM_ATTR void lcdDrawLineBuffer(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color, lcd_pixel_t *line)
 {
   int16_t steep = abs(y1 - y0) > abs(x1 - x0);
 
@@ -698,17 +697,17 @@ void lcdDrawLineBuffer(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t 
   }
 }
 
-void lcdDrawVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
+LCD_OPT_DEF IRAM_ATTR void lcdDrawVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
 {
   lcdDrawLine(x, y, x, y+h-1, color);
 }
 
-void lcdDrawHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
+LCD_OPT_DEF IRAM_ATTR void lcdDrawHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
 {
   lcdDrawLine(x, y, x+w-1, y, color);
 }
 
-void lcdDrawFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+LCD_OPT_DEF IRAM_ATTR void lcdDrawFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
 {
   for (int16_t i=x; i<x+w; i++)
   {
@@ -716,7 +715,7 @@ void lcdDrawFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
   }
 }
 
-void lcdDrawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+LCD_OPT_DEF IRAM_ATTR void lcdDrawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
 {
   lcdDrawHLine(x, y, w, color);
   lcdDrawHLine(x, y+h-1, w, color);
@@ -724,12 +723,12 @@ void lcdDrawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
   lcdDrawVLine(x+w-1, y, h, color);
 }
 
-void lcdDrawFillScreen(uint16_t color)
+LCD_OPT_DEF void lcdDrawFillScreen(uint16_t color)
 {
   lcdDrawFillRect(0, 0, HW_LCD_WIDTH, HW_LCD_HEIGHT, color);
 }
 
-void lcdPrintf(int x, int y, uint16_t color,  const char *fmt, ...)
+LCD_OPT_DEF void lcdPrintf(int x, int y, uint16_t color,  const char *fmt, ...)
 {
   va_list arg;
   va_start (arg, fmt);
@@ -795,7 +794,7 @@ void lcdPrintf(int x, int y, uint16_t color,  const char *fmt, ...)
 }
 
 
-uint32_t lcdGetStrWidth(const char *fmt, ...)
+LCD_OPT_DEF uint32_t lcdGetStrWidth(const char *fmt, ...)
 {
   va_list arg;
   va_start (arg, fmt);
@@ -832,7 +831,7 @@ uint32_t lcdGetStrWidth(const char *fmt, ...)
   return str_len;
 }
 
-void disHanFont(int x, int y, han_font_t *FontPtr, uint16_t textcolor)
+LCD_OPT_DEF void disHanFont(int x, int y, han_font_t *FontPtr, uint16_t textcolor)
 {
   uint16_t    i, j, Loop;
   uint16_t  FontSize = FontPtr->Size_Char;
@@ -864,7 +863,7 @@ void disHanFont(int x, int y, han_font_t *FontPtr, uint16_t textcolor)
   }
 }
 
-void disEngFont(int x, int y, char ch, lcd_font_t *font, uint16_t textcolor)
+LCD_OPT_DEF void disEngFont(int x, int y, char ch, lcd_font_t *font, uint16_t textcolor)
 {
   uint32_t i, b, j;
 
@@ -898,7 +897,7 @@ LCD_OPT_DEF void lcdDrawPixelBuffer(int16_t x_pos, int16_t y_pos, uint32_t rgb_c
   font_src_buffer[y_pos * 16 + x_pos] = rgb_code;
 }
 
-void disHanFontBuffer(int x, int y, han_font_t *FontPtr, uint16_t textcolor)
+LCD_OPT_DEF void disHanFontBuffer(int x, int y, han_font_t *FontPtr, uint16_t textcolor)
 {
   uint16_t    i, j, Loop;
   uint16_t  FontSize = FontPtr->Size_Char;
@@ -981,7 +980,7 @@ LCD_OPT_DEF void lcdDrawPixelMix(int16_t x_pos, int16_t y_pos, uint32_t rgb_code
   lcd_frame.draw_buffer[buf_index] = lcdGetColorMix(color1, color2, 255-mix);
 }
 
-void lcdPrintfResize(int x, int y, uint16_t color,  float ratio_h, const char *fmt, ...)
+LCD_OPT_DEF void lcdPrintfResize(int x, int y, uint16_t color,  float ratio_h, const char *fmt, ...)
 {
   va_list arg;
   va_start (arg, fmt);
@@ -1089,7 +1088,7 @@ void lcdPrintfResize(int x, int y, uint16_t color,  float ratio_h, const char *f
   }
 }
 
-void lcdPrintfRect(int x, int y, int w, int h, uint16_t color, float ratio, uint16_t align, const char *fmt, ...)
+LCD_OPT_DEF void lcdPrintfRect(int x, int y, int w, int h, uint16_t color, float ratio, uint16_t align, const char *fmt, ...)
 {
   va_list arg;
   va_start (arg, fmt);
@@ -1394,13 +1393,14 @@ void cliLcd(cli_args_t *args)
         lcdPrintf(0,16*1, white, "%d fps", fps);
         lcdPrintf(0,16*2, white, "%d ms fps" , fps_time);
         lcdPrintf(0,16*3, white, "%u ms draw" , draw_time);
+        lcdPrintf(0,16*4, white, "%d fps draw" , 1000/draw_time);
         lcdPrintfResize(LCD_WIDTH-30, 16, white, 24, "%02d", cnt%100);
         lcdPrintfResize(LCD_WIDTH-40, 40, white, 32, "%02d", cnt%100);
         cnt++;
 
-        lcdDrawFillRect( 0, 70, 10, 10, red);
-        lcdDrawFillRect(10, 70, 10, 10, green);
-        lcdDrawFillRect(20, 70, 10, 10, blue);
+        lcdDrawFillRect( 0, 86, 10, 10, red);
+        lcdDrawFillRect(10, 86, 10, 10, green);
+        lcdDrawFillRect(20, 86, 10, 10, blue);
 
         lcdDrawFillRect(((cnt*3)%(LCD_WIDTH-100)), 100, 100, (LCD_HEIGHT-100), red);
         lcdDrawFillRect(((cnt*5)%(LCD_WIDTH-100)), 100, 100, (LCD_HEIGHT-100), green);

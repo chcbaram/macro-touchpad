@@ -110,6 +110,7 @@ bool lcdcBegin(uint16_t width, uint16_t height, uint8_t bus_width, uint32_t freq
   {
     return false;
   }
+  
   if (esp_lcd_panel_init(h_panel) != ESP_OK)
   {
     return false;
