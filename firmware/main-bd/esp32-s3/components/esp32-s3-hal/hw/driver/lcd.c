@@ -17,7 +17,7 @@
 #define unLock()      xSemaphoreGive(mutex_lock);
 
 #define LCD_OPT_DEF             __attribute__((optimize("O2")))
-#define LCD_FRAME_BUF_MAX       3
+#define LCD_FRAME_BUF_MAX       2
 #define LCD_FONT_RESIZE_WIDTH  64
 
 #ifndef _swap_int16_t
@@ -106,7 +106,7 @@ bool lcdInit(void)
 
   lcdcSetCallBack(lcdTransferDoneISR);
 
-  ret = lcdcBegin(LCD_WIDTH, LCD_HEIGHT, 16, 15);
+  ret = lcdcBegin(LCD_WIDTH, LCD_HEIGHT, 16, 10);
   logPrintf("[%s] lcdcBegin()\n", ret ? "OK":"NG");
 
   if (ret != true)
@@ -161,8 +161,7 @@ static void lcdThread(void* arg)
   {
     if(xQueueReceive(lcd_event.evt_queue_vsync, NULL, portMAX_DELAY)) 
     {
-      delay(10);
-      //if (is_request_draw == true)
+      if (is_request_draw == true)
       {
         uint16_t *p_frame_buffer;
         uint32_t index;
@@ -186,10 +185,6 @@ static void lcdThread(void* arg)
           fps_count = 1000 / fps_time;
         }
       }
-      // else
-      // {
-      //   //lcdcRefreshFrameBuffer(lcdGetCurrentFrameBuffer());
-      // }
     }
   }
 }
@@ -273,8 +268,6 @@ bool lcdRequestDraw(void)
 
   lcd_frame.is_done[lcd_frame.index] = false;
   is_request_draw = true;
-  
-  // lcdcRefreshFrameBuffer(lcdGetCurrentFrameBuffer());
 
   return true;
 }
@@ -337,8 +330,7 @@ LCD_OPT_DEF void lcdClearBuffer(uint32_t rgb_code)
 void lcdSwapFrameBuffer(void)
 {
   lock();
-  // lcd_frame.index ^= 1;
-  lcd_frame.index = (lcd_frame.index + 1) % 3;
+  lcd_frame.index ^= 1;
   lcd_frame.draw_buffer = lcd_frame.buffer[lcd_frame.index];
   unLock();
 }
@@ -1339,7 +1331,7 @@ void cliLcd(cli_args_t *args)
 
   if (args->argc == 1 && args->isStr(0, "info") == true)
   {
-    cliPrintf("Driver : ILI9481\n");
+    cliPrintf("Driver : ST7701\n");
     cliPrintf("Width  : %d\n", LCD_WIDTH);
     cliPrintf("Height : %d\n", LCD_HEIGHT);
     cliPrintf("BKL    : %d%%\n", lcdGetBackLight());
@@ -1387,9 +1379,9 @@ void cliLcd(cli_args_t *args)
 
       if (lcdDrawAvailable() == true)
       {
-        
+        pre_time = micros();        
         lcdClearBuffer(black);
-pre_time = micros();
+
         lcdPrintf(25,16*0, green, "[LCD 테스트]");
 
         if (cnt%30 == 0)

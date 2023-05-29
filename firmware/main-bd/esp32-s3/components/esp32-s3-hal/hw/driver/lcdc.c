@@ -36,8 +36,6 @@
 
 
 static bool lcdcISR(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t *edata, void *user_ctx);
-// This function is located in ROM (also see esp_rom/${target}/ld/${target}.rom.ld)
-extern int Cache_WriteBack_Addr(uint32_t addr, uint32_t size);
 
 
 static esp_lcd_panel_handle_t h_panel = NULL;
@@ -65,7 +63,7 @@ bool lcdcBegin(uint16_t width, uint16_t height, uint8_t bus_width, uint32_t freq
       .bits_per_pixel         = 16,
       .psram_trans_align      = 64,
       // .bounce_buffer_size_px  = height * 20,
-      .num_fbs                = 3,
+      .num_fbs                = 2,
       .clk_src                = LCD_CLK_SRC_PLL160M,
       .disp_gpio_num          = GPIO_NUM_NC,
       .pclk_gpio_num          = GPIO_LCD_PCLK,
@@ -137,10 +135,10 @@ void *lcdcGetFrameBuffer(uint8_t index)
 
   if (is_begin != true)
     return NULL;
-  if (index >= 3)
+  if (index >= 2)
     return NULL;  
 
-  esp_lcd_rgb_panel_get_frame_buffer(h_panel, 3, &buf[0], &buf[1], &buf[2]);  
+  esp_lcd_rgb_panel_get_frame_buffer(h_panel, 2, &buf[0], &buf[1]);  
 
   return buf[index];
 }
@@ -149,10 +147,7 @@ bool lcdcRefreshFrameBuffer(void *buf)
 {
   if (is_begin != true) return false;
 
-  // esp_lcd_rgb_panel_restart(h_panel);
   esp_lcd_panel_draw_bitmap(h_panel, 0, 0, lcdc_width, lcdc_height, buf);
-  // esp_lcd_rgb_panel_refresh(h_panel);
-  esp_lcd_rgb_panel_restart(h_panel);
   return true;
 }
 
@@ -164,6 +159,5 @@ IRAM_ATTR bool lcdcISR(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_eve
   {
     ret = p_call_func();
   }
-  // esp_lcd_rgb_panel_restart(h_panel);
   return ret;
 }
