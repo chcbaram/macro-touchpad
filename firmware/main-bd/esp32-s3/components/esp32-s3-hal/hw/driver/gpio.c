@@ -38,7 +38,7 @@ static const gpio_tbl_t gpio_tbl[GPIO_MAX_CH] =
       {GPIO_I2C_EXP, (uint32_t)I2C_REG_TOUCH_OUT,     _DEF_INPUT,   _DEF_HIGH, "TOUCH_OUT"},    // 2. TOUCH_OUT 
       {GPIO_I2C_EXP, (uint32_t)I2C_REG_I2S_SD_MODE,   _DEF_OUTPUT,  _DEF_HIGH, "I2S_SD"},       // 3. I2S_SD   
       {GPIO_I2C_EXP, (uint32_t)I2C_REG_LCD_TP_RESET,  _DEF_OUTPUT,  _DEF_HIGH, "LCD_TP_RST"},   // 4. LCD_TP_RST      
-      {GPIO_I2C_EXP, (uint32_t)I2C_REG_LCD_BL,        _DEF_OUTPUT,  _DEF_HIGH, "LCD_BL"},       // 5. LCD_BL  
+      {GPIO_I2C_EXP, (uint32_t)I2C_REG_LCD_BL,        _DEF_OUTPUT,  _DEF_LOW , "LCD_BL"},       // 5. LCD_BL  
     };
 
 static uint8_t gpio_data[GPIO_MAX_CH];
