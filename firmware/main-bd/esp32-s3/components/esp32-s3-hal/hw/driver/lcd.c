@@ -11,13 +11,14 @@
 #include "touch.h"
 #include "gpio.h"
 #include "lcdc.h"
+#include "qbuffer.h"
 
 
 #define lock()        xSemaphoreTake(mutex_lock, portMAX_DELAY);
 #define unLock()      xSemaphoreGive(mutex_lock);
 
 #define LCD_OPT_DEF             __attribute__((optimize("O2")))
-#define LCD_FRAME_BUF_MAX       2
+#define LCD_FRAME_BUF_MAX       3
 #define LCD_FONT_RESIZE_WIDTH  64
 
 #ifndef _swap_int16_t
@@ -32,6 +33,8 @@ typedef struct
   uint32_t   index;
   uint16_t  *draw_buffer;
   bool       is_done[LCD_FRAME_BUF_MAX];
+  qbuffer_t  q_event;
+  uint8_t    q_buf[4];
 } lcd_frame_t;
 
 typedef struct
@@ -47,7 +50,7 @@ typedef struct
 
 
 static bool lcdTransferDoneISR(void);
-static void lcdSwapFrameBuffer(void);
+// static void lcdSwapFrameBuffer(void);
 static void lcdDrawLineBuffer(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color, lcd_pixel_t *line);
 static void cliLcd(cli_args_t *args);
 static bool lcdLoadCfg(void);
@@ -125,6 +128,8 @@ bool lcdInit(void)
       break;
     }
   }
+  qbufferCreate(&lcd_frame.q_event, lcd_frame.q_buf, 4);
+
   is_init = ret;
 
   if (ret == true)
@@ -164,23 +169,18 @@ static void lcdThread(void* arg)
       draw_frame_time = millis() - draw_pre_time;
       draw_pre_time = millis();
 
-      if (is_request_draw == true)
+      // if (is_request_draw == true)
+      if (qbufferAvailable(&lcd_frame.q_event) > 0)
       {
-        uint32_t index;
+        uint8_t index;
 
-        index = lcd_frame.index;
-        lcdSwapFrameBuffer();
+        //index = lcd_frame.index;
+        //lcdSwapFrameBuffer();
+        qbufferRead(&lcd_frame.q_event, &index, 1);
+        //lcdcRefreshFrameBuffer(lcd_frame.buffer[index]);
         is_request_draw = false;
 
         lcd_frame.is_done[index] = true;        
-
-        fps_time = millis() - fps_pre_time;
-        fps_pre_time = millis();
-
-        if (fps_time > 0)
-        {
-          fps_count = 1000 / fps_time;
-        }
       }
     }
   }
@@ -258,16 +258,26 @@ IRAM_ATTR bool lcdTransferDoneISR(void)
 bool lcdRequestDraw(void)
 {
   if (is_init != true) return false;
-  if (is_request_draw == true) return false;
-
+  // if (is_request_draw == true) return false;
 
   is_request_index = lcd_frame.index;
-
   lcd_frame.is_done[lcd_frame.index] = false;
-  is_request_draw = true;
+  // is_request_draw = true;
+  // lcdcRefreshFrameBuffer(lcdGetFrameBuffer());
 
-  lcdcRefreshFrameBuffer(lcdGetFrameBuffer());
+  qbufferWrite(&lcd_frame.q_event, (uint8_t *)&lcd_frame.index, 1);
+  lcdcRefreshFrameBuffer(lcd_frame.buffer[lcd_frame.index]);
 
+  lcd_frame.index = (lcd_frame.index + 1) % LCD_FRAME_BUF_MAX;
+  lcd_frame.draw_buffer = lcd_frame.buffer[lcd_frame.index];
+
+  fps_time = millis() - fps_pre_time;
+  fps_pre_time = millis();
+
+  if (fps_time > 0)
+  {
+    fps_count = 1000 / fps_time;
+  }
   return true;
 }
 
@@ -301,7 +311,12 @@ bool lcdDrawAvailable(void)
 {
   bool ret = false;
  
-  ret = !is_request_draw;
+  // ret = !is_request_draw;
+
+  if (qbufferAvailable(&lcd_frame.q_event) < 3)
+  {
+    ret = true;
+  }
 
   return ret;
 }
@@ -326,13 +341,13 @@ LCD_OPT_DEF IRAM_ATTR void lcdClearBuffer(uint32_t rgb_code)
   }
 }
 
-void lcdSwapFrameBuffer(void)
-{
-  lock();
-  lcd_frame.index ^= 1;
-  lcd_frame.draw_buffer = lcd_frame.buffer[lcd_frame.index];
-  unLock();
-}
+// void lcdSwapFrameBuffer(void)
+// {
+//   lock();
+//   lcd_frame.index ^= 1;
+//   lcd_frame.draw_buffer = lcd_frame.buffer[lcd_frame.index];
+//   unLock();
+// }
 
 uint32_t lcdGetDrawTime(void)
 {
@@ -1451,7 +1466,7 @@ void cliLcd(cli_args_t *args)
 
         for (int i=0; i<info.count; i++)
         {
-          uint16_t color[2] = {red, green};
+          uint16_t color[5] = {red, green, blue, pink, brown};
           int16_t x;
           int16_t y;
           int16_t size;

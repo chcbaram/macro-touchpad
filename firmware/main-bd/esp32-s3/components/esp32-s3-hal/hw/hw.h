@@ -36,6 +36,7 @@ extern "C" {
 #include "jpegd.h"
 #include "i2c_exp.h"
 
+
 bool hwInit(void);
 
 

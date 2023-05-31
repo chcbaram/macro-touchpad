@@ -63,7 +63,7 @@ bool lcdcBegin(uint16_t width, uint16_t height, uint8_t bus_width, uint32_t freq
       .bits_per_pixel         = 16,
       .psram_trans_align      = 64,
       // .bounce_buffer_size_px  = height * 20,
-      .num_fbs                = 2,
+      .num_fbs                = 3,
       .clk_src                = LCD_CLK_SRC_PLL160M,
       .disp_gpio_num          = GPIO_NUM_NC,
       .pclk_gpio_num          = GPIO_LCD_PCLK,
@@ -136,10 +136,10 @@ void *lcdcGetFrameBuffer(uint8_t index)
 
   if (is_begin != true)
     return NULL;
-  if (index >= 2)
+  if (index >= 3)
     return NULL;  
 
-  esp_lcd_rgb_panel_get_frame_buffer(h_panel, 2, &buf[0], &buf[1]);  
+  esp_lcd_rgb_panel_get_frame_buffer(h_panel, 3, &buf[0], &buf[1], &buf[2]);  
 
   return buf[index];
 }
