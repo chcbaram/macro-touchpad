@@ -1454,12 +1454,13 @@ void cliLcd(cli_args_t *args)
           uint16_t color[2] = {red, green};
           int16_t x;
           int16_t y;
+          int16_t size;
 
           x = info.point[i].x;
           y = info.point[i].y;
-
+          size = info.point[i].w * 3;
           lcdPrintf(x, y-80, white, "%d:%d", x, y);
-          lcdDrawFillCircle(x, y, 60, color[info.point[i].id]);
+          lcdDrawFillCircle(x, y, size, color[info.point[i].id]);
         }     
         lcdRequestDraw();
       }

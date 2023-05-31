@@ -144,7 +144,6 @@ typedef struct
 
 typedef struct
 {
-  uint8_t gest_id;
   uint8_t count;
   gt911_point_t point[5];
 } gt911_info_t;

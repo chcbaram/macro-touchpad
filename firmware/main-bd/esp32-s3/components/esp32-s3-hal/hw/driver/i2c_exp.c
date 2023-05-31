@@ -37,7 +37,7 @@ const i2c_exp_info_t i2c_exp_info[] =
   {I2C_REG_CHARGE_FLAG, I2C_EXP_NAME(I2C_REG_CHARGE_FLAG)},
   {I2C_REG_TOUCH_OUT,   I2C_EXP_NAME(I2C_REG_TOUCH_OUT)},
   {I2C_REG_I2S_SD_MODE, I2C_EXP_NAME(I2C_REG_I2S_SD_MODE)},
-  {I2C_REG_LCD_TP_RESET,I2C_EXP_NAME(I2C_REG_LCD_TP_RESET)},
+  {I2C_REG_LCD_TS_RST,  I2C_EXP_NAME(I2C_REG_LCD_TS_RST)},
   {I2C_REG_LCD_BL,      I2C_EXP_NAME(I2C_REG_LCD_BL)},
   {I2C_REG_LCD_WR_CMD,  I2C_EXP_NAME(I2C_REG_LCD_WR_CMD)},
   {I2C_REG_LCD_WR_DAT,  I2C_EXP_NAME(I2C_REG_LCD_WR_DAT)},
@@ -55,6 +55,12 @@ bool i2cExpInit(void)
 {
   bool ret = false;
 
+
+  if (i2cIsBegin(i2c_ch) == true)
+    ret = true;
+  else
+    ret = i2cBegin(i2c_ch, 400);
+    
   if (i2cIsDeviceReady(i2c_ch, i2c_addr))
   {
     ret = true;    

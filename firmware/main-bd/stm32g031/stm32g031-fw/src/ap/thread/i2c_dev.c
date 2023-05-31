@@ -6,7 +6,7 @@
 #define I2C_REG_CHARGE_FLAG     0x02    // RO
 #define I2C_REG_TOUCH_OUT       0x03    // RO
 #define I2C_REG_I2S_SD_MODE     0x04    // RW
-#define I2C_REG_LCD_TP_RESET    0x05    // RW
+#define I2C_REG_LCD_TS_RST      0x05    // RW
 #define I2C_REG_LCD_BL          0x06    // RW
 #define I2C_REG_LCD_WR_CMD      0x07    // WO
 #define I2C_REG_LCD_WR_DAT      0x08    // WO
@@ -79,7 +79,7 @@ void i2cReadCallback(uint8_t addr, uint8_t *p_data)
       *p_data = gpioPinRead(_PIN_GPIO_SPK_EN);
       break;
 
-    case I2C_REG_LCD_TP_RESET:
+    case I2C_REG_LCD_TS_RST:
       *p_data = gpioPinRead(_PIN_GPIO_TS_RST);
       break;
 
@@ -101,7 +101,7 @@ void i2cWriteCallback(uint8_t addr, uint8_t *p_data)
       gpioPinWrite(_PIN_GPIO_SPK_EN, p_data[0] > 0 ? 1:0);
       break;
 
-    case I2C_REG_LCD_TP_RESET:
+    case I2C_REG_LCD_TS_RST:
       gpioPinWrite(_PIN_GPIO_TS_RST, p_data[0] > 0 ? 1:0);
       break;
 

@@ -1,5 +1,5 @@
 #include "touch.h"
-// #include "touch/ft6236.h"
+#include "touch/gt911.h"
 #include "cli.h"
 #include "cli_gui.h"
 
@@ -22,14 +22,14 @@ bool touchInit(void)
   bool ret = false;
 
 
-  // ret = ft6236Init();
-  // if (ret == true)
-  // {
-  //   touch_width  = ft6236GetWidth();
-  //   touch_height = ft6236GetHeight();
-  //   is_init = true;
-  //   is_enable = true;
-  // }
+  ret = gt911Init();
+  if (ret == true)
+  {
+    touch_width  = gt911GetWidth();
+    touch_height = gt911GetHeight();
+    is_init = true;
+    is_enable = true;
+  }
 
 
   logPrintf("[%s] touchInit()\n", ret ? "OK":"NG");
@@ -42,7 +42,7 @@ bool touchInit(void)
 bool touchGetInfo(touch_info_t *p_info)
 {
   bool ret;
-  // ft6236_info_t ft6236_info;
+  gt911_info_t ts_info;
 
   if (is_init == false) return false;
   if (is_enable == false)
@@ -51,19 +51,19 @@ bool touchGetInfo(touch_info_t *p_info)
     return false;
   } 
 
-  // ret = ft6236GetInfo(&ft6236_info);
-  // if (ret == true)
-  // {
-  //   p_info->count = ft6236_info.count;
-  //   for (int i=0; i<ft6236_info.count; i++)
-  //   {
-  //     p_info->point[i].event = ft6236_info.point[i].event;
-  //     p_info->point[i].id    = ft6236_info.point[i].id;
-  //     p_info->point[i].x     = ft6236_info.point[i].x;
-  //     p_info->point[i].y     = ft6236_info.point[i].y;
-  //     p_info->point[i].w     = ft6236_info.point[i].weight;
-  //   }
-  // }
+  ret = gt911GetInfo(&ts_info);
+  if (ret == true)
+  {
+    p_info->count = ts_info.count;
+    for (int i=0; i<ts_info.count; i++)
+    {
+      p_info->point[i].event = ts_info.point[i].event;
+      p_info->point[i].id    = ts_info.point[i].id;
+      p_info->point[i].x     = ts_info.point[i].x;
+      p_info->point[i].y     = ts_info.point[i].y;
+      p_info->point[i].w     = ts_info.point[i].area;
+    }
+  }
 
   return ret;
 }

@@ -81,7 +81,7 @@
 #define      HW_TOUCH_MAX_CH        5
 
 #define _USE_HW_GPIO
-#define      HW_GPIO_MAX_CH         6
+#define      HW_GPIO_MAX_CH         7
 
 #define _USE_HW_LCDC
 
@@ -96,7 +96,9 @@
 #define      HW_LCD_HEIGHT          HW_ST7701_HEIGHT
 
 
+#define _PIN_GPIO_LCD_TS_RST        4
 #define _PIN_GPIO_LCD_BLK           5
+#define _PIN_GPIO_LCD_TS_INT        6
 
 
 #endif 

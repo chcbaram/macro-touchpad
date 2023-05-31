@@ -17,7 +17,7 @@ typedef enum
   I2C_REG_CHARGE_FLAG   = 0x02,
   I2C_REG_TOUCH_OUT     = 0x03, 
   I2C_REG_I2S_SD_MODE   = 0x04,
-  I2C_REG_LCD_TP_RESET  = 0x05,
+  I2C_REG_LCD_TS_RST    = 0x05,
   I2C_REG_LCD_BL        = 0x06,
   I2C_REG_LCD_WR_CMD    = 0x07,
   I2C_REG_LCD_WR_DAT    = 0x08,

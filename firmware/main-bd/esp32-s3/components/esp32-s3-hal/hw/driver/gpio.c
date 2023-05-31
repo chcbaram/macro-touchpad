@@ -37,8 +37,9 @@ static const gpio_tbl_t gpio_tbl[GPIO_MAX_CH] =
       {GPIO_I2C_EXP, (uint32_t)I2C_REG_CHARGE_FLAG,   _DEF_INPUT,   _DEF_HIGH, "CHARGE_FLAG"},  // 1. CHARGE_FLAG     
       {GPIO_I2C_EXP, (uint32_t)I2C_REG_TOUCH_OUT,     _DEF_INPUT,   _DEF_HIGH, "TOUCH_OUT"},    // 2. TOUCH_OUT 
       {GPIO_I2C_EXP, (uint32_t)I2C_REG_I2S_SD_MODE,   _DEF_OUTPUT,  _DEF_HIGH, "I2S_SD"},       // 3. I2S_SD   
-      {GPIO_I2C_EXP, (uint32_t)I2C_REG_LCD_TP_RESET,  _DEF_OUTPUT,  _DEF_HIGH, "LCD_TP_RST"},   // 4. LCD_TP_RST      
+      {GPIO_I2C_EXP, (uint32_t)I2C_REG_LCD_TS_RST,    _DEF_OUTPUT,  _DEF_HIGH, "LCD_TS_RST"},   // 4. LCD_TS_RST      
       {GPIO_I2C_EXP, (uint32_t)I2C_REG_LCD_BL,        _DEF_OUTPUT,  _DEF_LOW , "LCD_BL"},       // 5. LCD_BL  
+      {GPIO_HW,      (uint32_t)GPIO_NUM_0,            _DEF_OUTPUT,  _DEF_HIGH, "LCD_TS_INT"},   // 6. LCD_TS_INT  
     };
 
 static uint8_t gpio_data[GPIO_MAX_CH];
@@ -59,13 +60,14 @@ bool gpioInit(void)
   if (i2cExpIsInit() != true)
     return false;
 
+  is_init = ret;
+
   for (int i=0; i<GPIO_MAX_CH; i++)
   {
     gpioPinMode(i, gpio_tbl[i].mode);
     gpioPinWrite(i, gpio_tbl[i].init_value);
   }
 
-  is_init = ret;
 #ifdef _USE_HW_CLI
   cliAdd("gpio", cliGpio);
 #endif
@@ -78,7 +80,7 @@ bool gpioPinMode(uint8_t ch, uint8_t mode)
   bool ret = true;
 
 
-  if (ch >= GPIO_MAX_CH || is_init != true)
+  if (ch >= GPIO_MAX_CH)
   {
     return false;
   }
@@ -94,29 +96,36 @@ bool gpioPinMode(uint8_t ch, uint8_t mode)
   {
     case _DEF_INPUT:
       gpio_pullup_dis(gpio_tbl[ch].pin);
+      gpio_pulldown_dis(gpio_tbl[ch].pin);
       gpio_set_direction(gpio_tbl[ch].pin, GPIO_MODE_INPUT);
       break;
 
     case _DEF_INPUT_PULLUP:
       gpio_pullup_en(gpio_tbl[ch].pin);
+      gpio_pulldown_dis(gpio_tbl[ch].pin);
       gpio_set_direction(gpio_tbl[ch].pin, GPIO_MODE_INPUT);
       break;
 
     case _DEF_INPUT_PULLDOWN:
+      gpio_pullup_dis(gpio_tbl[ch].pin);
       gpio_pulldown_en(gpio_tbl[ch].pin);
       gpio_set_direction(gpio_tbl[ch].pin, GPIO_MODE_INPUT);
       break;
 
     case _DEF_OUTPUT:
+      gpio_pullup_dis(gpio_tbl[ch].pin);
+      gpio_pulldown_dis(gpio_tbl[ch].pin);
       gpio_set_direction(gpio_tbl[ch].pin, GPIO_MODE_OUTPUT);
       break;
 
     case _DEF_OUTPUT_PULLUP:
       gpio_pullup_en(gpio_tbl[ch].pin);
+      gpio_pulldown_dis(gpio_tbl[ch].pin);
       gpio_set_direction(gpio_tbl[ch].pin, GPIO_MODE_OUTPUT);
       break;
 
     case _DEF_OUTPUT_PULLDOWN:
+      gpio_pullup_dis(gpio_tbl[ch].pin);
       gpio_pulldown_en(gpio_tbl[ch].pin);
       gpio_set_direction(gpio_tbl[ch].pin, GPIO_MODE_OUTPUT);
       break;

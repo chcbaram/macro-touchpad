@@ -9,7 +9,7 @@
 
 
 #include "hw.h"
-#include "touch/gt911.h"
+
 
 
 static void bootMsg(void);
@@ -44,7 +44,7 @@ bool hwInit(void)
   gpioInit();
   audioInit();
   buzzerInit();
-  gt911Init();
+  touchInit();
   lcdInit();
 
   return true;
