@@ -328,7 +328,7 @@ uint16_t *lcdGetFrameBuffer(void)
 
 uint16_t *lcdGetCurrentFrameBuffer(void)
 {
-  return (uint16_t *)lcd_frame.buffer[lcd_frame.index^1];
+  return (uint16_t *)lcd_frame.buffer[(lcd_frame.index + 1)%LCD_FRAME_BUF_MAX];
 }
 
 LCD_OPT_DEF IRAM_ATTR void lcdClearBuffer(uint32_t rgb_code)

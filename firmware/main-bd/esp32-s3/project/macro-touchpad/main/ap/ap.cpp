@@ -1,15 +1,5 @@
-/*
- * ap.cpp
- *
- *  Created on: 2021. 1. 9.
- *      Author: baram
- */
-
-
-
-
 #include "ap.h"
-
+#include "widgets/lv_demo_widgets.h"
 
 
 static void cliThread(void *args);
@@ -36,7 +26,10 @@ void apMain(void)
 {
   uint32_t pre_time;
 
+  lvglInit();
 
+  lv_demo_widgets();
+  
   pre_time = millis();
   while(1)
   {
@@ -45,6 +38,8 @@ void apMain(void)
       pre_time = millis();
     }
     delay(1);   
+
+    lvglUpdate();
   }
 }
 

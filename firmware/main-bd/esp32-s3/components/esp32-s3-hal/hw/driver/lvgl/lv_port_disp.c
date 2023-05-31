@@ -4,6 +4,7 @@
 
 
 static bool is_init = false;
+static lv_disp_draw_buf_t draw_buf_dsc;
 
 static void disp_init(void);
 static void disp_flush(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
@@ -23,14 +24,13 @@ void lv_port_disp_init(void)
     * Create a buffer for drawing
     *----------------------------*/
 
-  static lv_disp_draw_buf_t draw_buf_dsc;
-  static lv_color_t *p_buf_1;
-  static lv_color_t *p_buf_2;
+  // static lv_color_t *p_buf_1;
+  // static lv_color_t *p_buf_2;
 
-  p_buf_1 = (lv_color_t *)lcdGetFrameBuffer();
-  p_buf_2 = (lv_color_t *)lcdGetCurrentFrameBuffer();
+  // p_buf_1 = (lv_color_t *)lcdGetFrameBuffer();
+  // p_buf_2 = (lv_color_t *)lcdGetCurrentFrameBuffer();
 
-  lv_disp_draw_buf_init(&draw_buf_dsc, p_buf_1, p_buf_2, LCD_WIDTH * LCD_HEIGHT);  
+  lv_disp_draw_buf_init(&draw_buf_dsc, lcdGetFrameBuffer(), NULL, LCD_WIDTH * LCD_HEIGHT);  
 
 
   if (is_init) return;
@@ -117,9 +117,17 @@ static void disp_flush(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_colo
   logPrintf("disp_flush\n");
   #endif
 
-  lcdRequestDraw();
-  while(!lcdDrawAvailable());
+  if (disp_flush_enabled)
+  {
+    while(!lcdDrawAvailable())
+    {
+      delay(1);
+    }
 
+    lcdRequestDraw();
+    lv_disp_draw_buf_init(&draw_buf_dsc, lcdGetFrameBuffer(), NULL, LCD_WIDTH * LCD_HEIGHT); 
+  }
+  
   /*IMPORTANT!!!
     *Inform the graphics library that you are ready with the flushing*/
   lv_disp_flush_ready(disp_drv);
