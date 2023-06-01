@@ -21,6 +21,7 @@ typedef enum
   I2C_REG_LCD_BL        = 0x06,
   I2C_REG_LCD_WR_CMD    = 0x07,
   I2C_REG_LCD_WR_DAT    = 0x08,
+  I2C_REG_LCD_BL_PWM    = 0x09,
 } I2cExpAddr_t;
 
 

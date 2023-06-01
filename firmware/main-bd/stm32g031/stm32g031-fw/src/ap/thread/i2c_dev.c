@@ -10,6 +10,7 @@
 #define I2C_REG_LCD_BL          0x06    // RW
 #define I2C_REG_LCD_WR_CMD      0x07    // WO
 #define I2C_REG_LCD_WR_DAT      0x08    // WO
+#define I2C_REG_LCD_BL_PWM      0x09    // RW
 
 
 
@@ -86,7 +87,11 @@ void i2cReadCallback(uint8_t addr, uint8_t *p_data)
     case I2C_REG_LCD_BL:
       *p_data = gpioPinRead(_PIN_GPIO_LCD_BL);
       break;
-      
+
+    case I2C_REG_LCD_BL_PWM:
+      *p_data = pwmRead(_DEF_PWM1);
+      break;
+
     default:
       *p_data = 0x00;
       break;
@@ -115,6 +120,10 @@ void i2cWriteCallback(uint8_t addr, uint8_t *p_data)
 
     case I2C_REG_LCD_WR_DAT:
       lcdWriteData(p_data[0]);
+      break;
+
+    case I2C_REG_LCD_BL_PWM:
+      pwmWrite(_DEF_PWM1, p_data[0]);
       break;
 
     default:

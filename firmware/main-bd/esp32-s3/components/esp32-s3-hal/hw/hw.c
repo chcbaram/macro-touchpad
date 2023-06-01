@@ -42,6 +42,7 @@ bool hwInit(void)
   i2cExpInit();
   i2sInit();
   gpioInit();
+  pwmInit();
   audioInit();
   buzzerInit();
   touchInit();

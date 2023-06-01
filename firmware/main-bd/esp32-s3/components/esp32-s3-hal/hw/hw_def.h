@@ -83,6 +83,9 @@
 #define _USE_HW_GPIO
 #define      HW_GPIO_MAX_CH         7
 
+#define _USE_HW_PWM
+#define      HW_PWM_MAX_CH          1
+
 #define _USE_HW_LCDC
 
 #define _USE_HW_ST7701

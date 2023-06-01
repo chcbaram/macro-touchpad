@@ -19,7 +19,7 @@ const gpio_tbl_t gpio_tbl[GPIO_MAX_CH] =
     {
         {GPIOB, GPIO_PIN_0 , _DEF_OUTPUT, GPIO_PIN_SET, GPIO_PIN_RESET,   _DEF_HIGH},      // 0. SPK_EN
         {GPIOB, GPIO_PIN_1 , _DEF_OUTPUT, GPIO_PIN_SET, GPIO_PIN_RESET,   _DEF_HIGH},      // 1. PWR_3V3_OFF
-        {GPIOA, GPIO_PIN_7 , _DEF_OUTPUT, GPIO_PIN_SET, GPIO_PIN_RESET,   _DEF_LOW},       // 2. LCD_BL
+        {NULL,  GPIO_PIN_7 , _DEF_OUTPUT, GPIO_PIN_SET, GPIO_PIN_RESET,   _DEF_LOW},       // 2. LCD_BL
         {GPIOA, GPIO_PIN_5 , _DEF_OUTPUT, GPIO_PIN_SET, GPIO_PIN_RESET,   _DEF_HIGH},      // 3. TS_RST
         {GPIOA, GPIO_PIN_15, _DEF_INPUT , GPIO_PIN_SET, GPIO_PIN_RESET,   _DEF_HIGH},      // 4. CHARGE_FLASH
         {GPIOA, GPIO_PIN_4 , _DEF_OUTPUT, GPIO_PIN_SET, GPIO_PIN_RESET,   _DEF_HIGH},      // 5. SPI_CS
@@ -60,10 +60,8 @@ bool gpioPinMode(uint8_t ch, uint8_t mode)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
 
-  if (ch >= GPIO_MAX_CH)
-  {
-    return false;
-  }
+  if (ch >= GPIO_MAX_CH) return false;
+  if (gpio_tbl[ch].port == NULL) return false;
 
   switch(mode)
   {
@@ -106,10 +104,9 @@ bool gpioPinMode(uint8_t ch, uint8_t mode)
 
 void gpioPinWrite(uint8_t ch, bool value)
 {
-  if (ch >= GPIO_MAX_CH)
-  {
-    return;
-  }
+  if (ch >= GPIO_MAX_CH) return;
+  if (gpio_tbl[ch].port == NULL) return;
+
 
   if (value)
   {
@@ -125,10 +122,9 @@ bool gpioPinRead(uint8_t ch)
 {
   bool ret = false;
 
-  if (ch >= GPIO_MAX_CH)
-  {
-    return false;
-  }
+  if (ch >= GPIO_MAX_CH) return false;
+  if (gpio_tbl[ch].port == NULL) return false;
+
 
   if (HAL_GPIO_ReadPin(gpio_tbl[ch].port, gpio_tbl[ch].pin) == gpio_tbl[ch].on_state)
   {
@@ -140,10 +136,9 @@ bool gpioPinRead(uint8_t ch)
 
 void gpioPinToggle(uint8_t ch)
 {
-  if (ch >= GPIO_MAX_CH)
-  {
-    return;
-  }
+  if (ch >= GPIO_MAX_CH) return;
+  if (gpio_tbl[ch].port == NULL) return;
+
 
   HAL_GPIO_TogglePin(gpio_tbl[ch].port, gpio_tbl[ch].pin);
 }

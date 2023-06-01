@@ -25,6 +25,7 @@ bool hwInit(void)
   logPrintf("Booting..Ver  \t\t: %s\r\n", _DEF_FIRMWATRE_VERSION);  
   logPrintf("\n");
 
+  pwmInit();
   i2cBegin(_DEF_I2C1, 400);
 
   spiBegin(_DEF_SPI1);

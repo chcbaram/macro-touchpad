@@ -241,10 +241,17 @@ void lcdSetBackLight(uint8_t value)
 
   lcdSaveCfg();
 
+  #ifdef _USE_HW_PWM
+  uint8_t pwm_out;
+
+  pwm_out = cmap(backlight_value, 0, 100, 0, 255);
+  pwmWrite(_DEF_PWM1, pwm_out);
+  #else
   if (backlight_value > 0)
     gpioPinWrite(_PIN_GPIO_LCD_BLK, _DEF_HIGH);
   else
     gpioPinWrite(_PIN_GPIO_LCD_BLK, _DEF_LOW);
+  #endif
 }
 
 IRAM_ATTR bool lcdTransferDoneISR(void)
