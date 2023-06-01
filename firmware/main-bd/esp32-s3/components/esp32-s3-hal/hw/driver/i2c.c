@@ -18,6 +18,9 @@
 
 #ifdef _USE_HW_I2C
 
+#define lock()      xSemaphoreTake(mutex_lock, portMAX_DELAY);
+#define unLock()    xSemaphoreGive(mutex_lock);
+
 #ifdef _USE_HW_CLI
 static void cliI2C(cli_args_t *args);
 #endif
@@ -30,7 +33,7 @@ static uint32_t i2c_freq[I2C_MAX_CH];
 
 static bool is_init = false;
 static bool is_begin[I2C_MAX_CH];
-
+static SemaphoreHandle_t mutex_lock;
 
 
 
@@ -62,6 +65,8 @@ bool i2cInit(void)
     i2c_errcount[i] = 0;
     is_begin[i] = false;
   }
+
+  mutex_lock = xSemaphoreCreateMutex();
 
 #ifdef _USE_HW_CLI
   cliAdd("i2c", cliI2C);
@@ -136,7 +141,7 @@ void i2cReset(uint8_t ch)
 {
   i2c_tbl_t *p_pin = &i2c_tbl[ch];
 
-
+  lock();
   gpio_reset_pin(p_pin->scl_pin);
   gpio_set_direction(p_pin->scl_pin, GPIO_MODE_OUTPUT);
 
@@ -164,6 +169,7 @@ void i2cReset(uint8_t ch)
   gpio_set_level(p_pin->scl_pin, 1);  
   delayUs(5);
   gpio_set_level(p_pin->sda_pin, 1);  
+  unLock();
 }
 
 bool i2cIsDeviceReady(uint8_t ch, uint8_t dev_addr)
@@ -174,12 +180,13 @@ bool i2cIsDeviceReady(uint8_t ch, uint8_t dev_addr)
   if (ch >= I2C_MAX_CH) return false;
   if (is_begin[ch] == false) return false;
 
-
+  lock();
   esp_ret = i2c_master_read_from_device(i2c_tbl[ch].i2c_num, 
                                         dev_addr,
                                         &rx_data, 
                                         1,
                                         10);
+  unLock();
 
   if (esp_ret == ESP_OK)
   {
@@ -213,7 +220,7 @@ bool i2cReadBytes(uint8_t ch, uint16_t dev_addr, uint16_t reg_addr, uint8_t *p_d
   if (ch >= I2C_MAX_CH) return false;
   if (i2cIsBegin(ch) == false) return false;
 
-  
+  lock();
   esp_ret = i2c_master_write_read_device(i2c_tbl[ch].i2c_num, 
                                         dev_addr, 
                                         (const uint8_t *)&reg_addr,
@@ -221,6 +228,8 @@ bool i2cReadBytes(uint8_t ch, uint16_t dev_addr, uint16_t reg_addr, uint8_t *p_d
                                         p_data, 
                                         length, 
                                         timeout);
+  unLock();
+
   if (esp_ret == ESP_OK)
   {
     ret = true;
@@ -238,6 +247,7 @@ bool i2cRead16Bytes(uint8_t ch, uint16_t dev_addr, uint16_t reg_addr, uint8_t *p
   if (ch >= I2C_MAX_CH) return false;
   if (i2cIsBegin(ch) == false) return false;
 
+  lock();
   addr_buf[0] = (reg_addr >> 8) & 0xFF;
   addr_buf[1] = (reg_addr >> 0) & 0xFF;
   esp_ret = i2c_master_write_read_device(i2c_tbl[ch].i2c_num, 
@@ -247,6 +257,8 @@ bool i2cRead16Bytes(uint8_t ch, uint16_t dev_addr, uint16_t reg_addr, uint8_t *p
                                         p_data, 
                                         length, 
                                         timeout);
+  unLock();
+
   if (esp_ret == ESP_OK)
   {
     ret = true;
@@ -263,12 +275,13 @@ bool i2cReadData(uint8_t ch, uint16_t dev_addr, uint8_t *p_data, uint32_t length
   if (ch >= I2C_MAX_CH) return false;
   if (i2cIsBegin(ch) == false) return false;
 
-  
+  lock();
   esp_ret = i2c_master_read_from_device(i2c_tbl[ch].i2c_num, dev_addr, p_data, length, timeout);
   if (esp_ret == ESP_OK)
   {
     ret = true;
   }
+  unLock();
 
   return ret;
 }
@@ -287,6 +300,7 @@ bool i2cWriteBytes(uint8_t ch, uint16_t dev_addr, uint16_t reg_addr, uint8_t *p_
   if (ch >= I2C_MAX_CH) return false;
   if (i2cIsBegin(ch) == false) return false;
 
+  lock();
   tx_buf[0] = reg_addr;
   memcpy(&tx_buf[1], p_data, length);
   esp_ret = i2c_master_write_to_device(i2c_tbl[ch].i2c_num, dev_addr, tx_buf, length + 1, timeout);
@@ -294,6 +308,7 @@ bool i2cWriteBytes(uint8_t ch, uint16_t dev_addr, uint16_t reg_addr, uint8_t *p_
   {
     ret = true;
   }
+  unLock();
 
   return ret;
 }
@@ -310,12 +325,14 @@ bool i2cWrite16Bytes(uint8_t ch, uint16_t dev_addr, uint16_t reg_addr, uint8_t *
   tx_buf[0] = (reg_addr >> 8) & 0xFF;
   tx_buf[1] = (reg_addr >> 0) & 0xFF;
 
+  lock();
   memcpy(&tx_buf[2], p_data, length);
   esp_ret = i2c_master_write_to_device(i2c_tbl[ch].i2c_num, dev_addr, tx_buf, length + 2, timeout);
   if (esp_ret == ESP_OK)
   {
     ret = true;
   }
+  unLock();
 
   return ret;
 }
@@ -328,12 +345,13 @@ bool i2cWriteData(uint8_t ch, uint16_t dev_addr, uint8_t *p_data, uint32_t lengt
   if (ch >= I2C_MAX_CH) return false;
   if (i2cIsBegin(ch) == false) return false;
 
-  
+  lock();
   esp_ret = i2c_master_write_to_device(i2c_tbl[ch].i2c_num, dev_addr, p_data, length, timeout);
   if (esp_ret == ESP_OK)
   {
     ret = true;
   }
+  unLock();
 
   return ret;
 }

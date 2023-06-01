@@ -35,6 +35,8 @@ extern "C" {
 #include "lvgl.h"
 #include "jpegd.h"
 #include "i2c_exp.h"
+#include "adc.h"
+#include "battery.h"
 
 
 bool hwInit(void);

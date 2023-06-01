@@ -43,8 +43,10 @@ bool hwInit(void)
   i2sInit();
   gpioInit();
   pwmInit();
+  adcInit();
   audioInit();
   buzzerInit();
+  batteryInit();
   touchInit();
   lcdInit();
 

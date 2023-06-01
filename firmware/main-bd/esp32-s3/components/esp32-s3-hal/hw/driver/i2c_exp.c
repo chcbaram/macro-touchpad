@@ -42,6 +42,10 @@ const i2c_exp_info_t i2c_exp_info[] =
   {I2C_REG_LCD_WR_CMD,  I2C_EXP_NAME(I2C_REG_LCD_WR_CMD)},
   {I2C_REG_LCD_WR_DAT,  I2C_EXP_NAME(I2C_REG_LCD_WR_DAT)},
   {I2C_REG_LCD_BL_PWM,  I2C_EXP_NAME(I2C_REG_LCD_BL_PWM)},
+
+  {I2C_REG_BAT_ADC_UP,  I2C_EXP_NAME(I2C_REG_BAT_ADC_UP)},
+  {I2C_REG_BAT_ADC_L,   I2C_EXP_NAME(I2C_REG_BAT_ADC_L)},
+  {I2C_REG_BAT_ADC_H,   I2C_EXP_NAME(I2C_REG_BAT_ADC_H)},
 };
 
 
@@ -124,16 +128,42 @@ void cliCmd(cli_args_t *args)
     {
       i2cExpRead(i2c_exp_info[i].addr, &reg_data, 1);
 
-      cliPrintf("        %-20s - 0x%02X\n", i2c_exp_info[i].p_name, reg_data);
+      cliPrintf("        %-20s 0x%02X - 0x%02X\n", i2c_exp_info[i].p_name, i2c_exp_info[i].addr, reg_data);
     }
     
     ret = true;  
   }
 
+  if (args->argc == 3 && args->isStr(0, "write") == true)
+  {
+    uint8_t reg_cnt;
+    uint8_t reg_addr;
+    uint8_t reg_data;
+
+    reg_addr = args->getData(1);
+    reg_data = args->getData(2);
+
+    reg_cnt = sizeof(i2c_exp_info) / sizeof(i2c_exp_info_t);
+
+    if (reg_addr < reg_cnt)
+    {
+      if (i2cExpWrite(reg_addr, &reg_data, 1) == true)
+        cliPrintf("i2cExpWrite 0x%02X : 0x%02X OK\n", reg_addr, reg_data);
+      else
+        cliPrintf("i2cExpWrite 0x%02X : 0x%02X Fail\n", reg_addr, reg_data);
+    }
+    else
+    {
+      cliPrintf("addr error\n");
+    }
+    
+    ret = true;  
+  }
 
   if (ret == false)
   {
-    cliPrintf( "i2c-exp info\n");
+    cliPrintf("i2c-exp info\n");
+    cliPrintf("i2c-exp write addr data\n");
   }
 }
 

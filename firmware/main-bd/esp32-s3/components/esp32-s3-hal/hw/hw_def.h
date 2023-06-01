@@ -27,6 +27,7 @@
 #define _HW_DEF_RTOS_THREAD_PRI_I2S           5
 #define _HW_DEF_RTOS_THREAD_PRI_AUDIO         5
 #define _HW_DEF_RTOS_THREAD_PRI_BT_HIDH       5
+#define _HW_DEF_RTOS_THREAD_PRI_BATTERY       5
 
 
 #define _HW_DEF_RTOS_THREAD_MEM_CLI           (8*1024)
@@ -37,6 +38,8 @@
 #define _HW_DEF_RTOS_THREAD_MEM_I2S           (4*1024)
 #define _HW_DEF_RTOS_THREAD_MEM_AUDIO         (8*1024)
 #define _HW_DEF_RTOS_THREAD_MEM_BT_HIDH       (6*1024)
+#define _HW_DEF_RTOS_THREAD_MEM_BATTERY       (2*1024)
+
 
 #define _USE_HW_RTOS
 #define _USE_HW_NVS
@@ -47,7 +50,7 @@
 #define _USE_HW_LCDC
 #define _USE_HW_I2C_EXP
 #define _USE_HW_LVGL
-
+#define _USE_HW_BATTERY
 
 #define _USE_HW_UART
 #define      HW_UART_MAX_CH         2
@@ -85,6 +88,10 @@
 
 #define _USE_HW_PWM
 #define      HW_PWM_MAX_CH          1
+
+#define _USE_HW_ADC
+#define      HW_ADC_MAX_CH          1
+
 
 #define _USE_HW_LCDC
 

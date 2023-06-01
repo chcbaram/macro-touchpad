@@ -26,6 +26,7 @@ bool hwInit(void)
   logPrintf("\n");
 
   pwmInit();
+  adcInit();
   i2cBegin(_DEF_I2C1, 400);
 
   spiBegin(_DEF_SPI1);

@@ -24,6 +24,7 @@
 bool batteryInit(void);
 bool batteryIsInit(void);
 bool batteryIsCharging(void);
+bool batteryIsConnected(void);
 
 int32_t batteryGetPercent(void);
 float   batteryGetVoltage(void);

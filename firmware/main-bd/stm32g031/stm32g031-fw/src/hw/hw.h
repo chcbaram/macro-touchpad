@@ -31,6 +31,7 @@
 #include "lcd.h"
 #include "pwm.h"
 #include "nvs.h"
+#include "adc.h"
 
 
 bool hwInit(void);

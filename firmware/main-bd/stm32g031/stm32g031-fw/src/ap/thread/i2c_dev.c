@@ -11,18 +11,55 @@
 #define I2C_REG_LCD_WR_CMD      0x07    // WO
 #define I2C_REG_LCD_WR_DAT      0x08    // WO
 #define I2C_REG_LCD_BL_PWM      0x09    // RW
+#define I2C_REG_BAT_ADC_UP      0x0A    // WO
+#define I2C_REG_BAT_ADC_L       0x0B    // RO
+#define I2C_REG_BAT_ADC_H       0x0C    // RO
 
+
+
+static uint16_t bat_adc = 0;
+static bool     bat_is_connected = false;
+static bool     bat_is_charging = false;
+static uint32_t charge_pre_time;
+static uint8_t  charge_pre = 0;
+static uint8_t  charge_cnt = 0;
 
 
 
 bool i2cDevInit(void)
 {
+  charge_pre_time = millis();
   return true;
 }
 
 void i2cDevUpdate(void)
 {
+  uint8_t charge_pin;
 
+  charge_pin = gpioPinRead(_PIN_GPIO_CHARGE_FLAG);
+  if (charge_pin != charge_pre)
+  {
+    if (charge_cnt < 255)
+      charge_cnt++;
+  }
+  charge_pre = charge_pin;
+
+  if (millis()-charge_pre_time >= 100)
+  {
+    charge_pre_time = millis();
+    
+    if (charge_cnt > 20)
+      bat_is_connected = false;
+    else
+      bat_is_connected = true;
+
+    charge_cnt = 0;
+  }
+
+  if (bat_is_connected && gpioPinRead(_PIN_GPIO_CHARGE_FLAG) == _DEF_LOW)
+    bat_is_charging = true;
+  else
+    bat_is_charging = false;
 }
 
 
@@ -69,7 +106,7 @@ void i2cReadCallback(uint8_t addr, uint8_t *p_data)
       break;
 
     case I2C_REG_CHARGE_FLAG:
-      *p_data = gpioPinRead(_PIN_GPIO_CHARGE_FLAG);
+      *p_data = (bat_is_connected<<1) | (bat_is_charging<<0);
       break;
 
     case I2C_REG_TOUCH_OUT:
@@ -90,6 +127,14 @@ void i2cReadCallback(uint8_t addr, uint8_t *p_data)
 
     case I2C_REG_LCD_BL_PWM:
       *p_data = pwmRead(_DEF_PWM1);
+      break;
+
+    case I2C_REG_BAT_ADC_L:
+      *p_data = (bat_adc>>0) & 0xFF;
+      break;
+
+    case I2C_REG_BAT_ADC_H:
+      *p_data = (bat_adc>>8) & 0xFF;
       break;
 
     default:
@@ -124,6 +169,13 @@ void i2cWriteCallback(uint8_t addr, uint8_t *p_data)
 
     case I2C_REG_LCD_BL_PWM:
       pwmWrite(_DEF_PWM1, p_data[0]);
+      break;
+
+    case I2C_REG_BAT_ADC_UP:
+      if (p_data[0] > 0)
+      {
+        bat_adc = adcRead12(0);
+      }
       break;
 
     default:
