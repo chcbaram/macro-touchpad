@@ -412,16 +412,16 @@ void lvglFree(void * p);
 #define LV_FONT_CUSTOM_DECLARE
 
 /*Always set a default font*/
-//#define LV_FONT_DEFAULT &lv_font_montserrat_14
-#define LV_FONT_DEFAULT &lv_han_font_16
+#define LV_FONT_DEFAULT &lv_font_montserrat_14
+// #define LV_FONT_DEFAULT &lv_han_font_16
 
 /*Enable handling large font and/or fonts with a lot of characters.
  *The limit depends on the font size, font face and bpp.
  *Compiler error will be triggered if a font needs it.*/
-#define LV_FONT_FMT_TXT_LARGE 0
+#define LV_FONT_FMT_TXT_LARGE 1
 
 /*Enables/disables support for compressed fonts.*/
-#define LV_USE_FONT_COMPRESSED 0
+#define LV_USE_FONT_COMPRESSED 1
 
 /*Enable drawing placeholders when glyph dsc is not found*/
 #define LV_USE_FONT_PLACEHOLDER 1

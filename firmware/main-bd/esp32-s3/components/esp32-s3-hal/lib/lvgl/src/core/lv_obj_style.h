@@ -37,7 +37,7 @@ typedef enum {
 typedef uint32_t lv_style_selector_t;
 
 typedef struct {
-    const lv_style_t * style;
+    lv_style_t * style;
     uint32_t selector : 24;
     uint32_t is_local : 1;
     uint32_t is_trans : 1;
@@ -72,7 +72,7 @@ void _lv_obj_style_init(void);
  * @example         lv_obj_add_style(btn, &style_btn, 0); //Default button style
  * @example         lv_obj_add_style(btn, &btn_red, LV_STATE_PRESSED); //Overwrite only some colors to red when pressed
  */
-void lv_obj_add_style(struct _lv_obj_t * obj, const lv_style_t * style, lv_style_selector_t selector);
+void lv_obj_add_style(struct _lv_obj_t * obj, lv_style_t * style, lv_style_selector_t selector);
 
 /**
  * Add a style to an object.
@@ -83,13 +83,16 @@ void lv_obj_add_style(struct _lv_obj_t * obj, const lv_style_t * style, lv_style
  * @example lv_obj_remove_style(obj, NULL, LV_PART_MAIN | LV_STATE_ANY); //Remove all styles from the main part
  * @example lv_obj_remove_style(obj, NULL, LV_PART_ANY | LV_STATE_ANY); //Remove all styles
  */
-void lv_obj_remove_style(struct _lv_obj_t * obj, const lv_style_t * style, lv_style_selector_t selector);
+void lv_obj_remove_style(struct _lv_obj_t * obj, lv_style_t * style, lv_style_selector_t selector);
 
 /**
  * Remove all styles from an object
  * @param obj       pointer to an object
  */
-void lv_obj_remove_style_all(struct _lv_obj_t * obj);
+static inline void lv_obj_remove_style_all(struct _lv_obj_t * obj)
+{
+    lv_obj_remove_style(obj, NULL, LV_PART_ANY | LV_STATE_ANY);
+}
 
 /**
  * Notify all object if a style is modified
@@ -225,43 +228,10 @@ static inline void lv_obj_set_style_pad_gap(struct _lv_obj_t * obj, lv_coord_t v
     lv_obj_set_style_pad_column(obj, value, selector);
 }
 
-static inline void lv_obj_set_style_size(struct _lv_obj_t * obj, lv_coord_t width, lv_coord_t height,
-                                         lv_style_selector_t selector)
+static inline void lv_obj_set_style_size(struct _lv_obj_t * obj, lv_coord_t value, lv_style_selector_t selector)
 {
-    lv_obj_set_style_width(obj, width, selector);
-    lv_obj_set_style_height(obj, height, selector);
-}
-
-static inline lv_coord_t lv_obj_get_style_space_left(const struct _lv_obj_t * obj, uint32_t part)
-{
-    lv_coord_t padding = lv_obj_get_style_pad_left(obj, part);
-    lv_coord_t border_width = lv_obj_get_style_border_width(obj, part);
-    lv_border_side_t border_side = lv_obj_get_style_border_side(obj, part);
-    return (border_side & LV_BORDER_SIDE_LEFT) ? padding + border_width : padding;
-}
-
-static inline lv_coord_t lv_obj_get_style_space_right(const struct _lv_obj_t * obj, uint32_t part)
-{
-    lv_coord_t padding = lv_obj_get_style_pad_right(obj, part);
-    lv_coord_t border_width = lv_obj_get_style_border_width(obj, part);
-    lv_border_side_t border_side = lv_obj_get_style_border_side(obj, part);
-    return (border_side & LV_BORDER_SIDE_RIGHT) ? padding + border_width : padding;
-}
-
-static inline lv_coord_t lv_obj_get_style_space_top(const struct _lv_obj_t * obj, uint32_t part)
-{
-    lv_coord_t padding = lv_obj_get_style_pad_top(obj, part);
-    lv_coord_t border_width = lv_obj_get_style_border_width(obj, part);
-    lv_border_side_t border_side = lv_obj_get_style_border_side(obj, part);
-    return (border_side & LV_BORDER_SIDE_TOP) ? padding + border_width : padding;
-}
-
-static inline lv_coord_t lv_obj_get_style_space_bottom(const struct _lv_obj_t * obj, uint32_t part)
-{
-    lv_coord_t padding = lv_obj_get_style_pad_bottom(obj, part);
-    lv_coord_t border_width = lv_obj_get_style_border_width(obj, part);
-    lv_border_side_t border_side = lv_obj_get_style_border_side(obj, part);
-    return (border_side & LV_BORDER_SIDE_BOTTOM) ? padding + border_width : padding;
+    lv_obj_set_style_width(obj, value, selector);
+    lv_obj_set_style_height(obj, value, selector);
 }
 
 lv_text_align_t lv_obj_calculate_style_text_align(const struct _lv_obj_t * obj, lv_part_t part, const char * txt);

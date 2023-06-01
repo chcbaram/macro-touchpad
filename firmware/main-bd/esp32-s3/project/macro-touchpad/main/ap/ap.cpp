@@ -1,6 +1,6 @@
 #include "ap.h"
-#include "widgets/lv_demo_widgets.h"
-
+// #include "widgets/lv_demo_widgets.h"
+#include "lvgl/ui.h"
 
 static void cliThread(void *args);
 
@@ -28,7 +28,8 @@ void apMain(void)
 
   lvglInit();
 
-  lv_demo_widgets();
+  // lv_demo_widgets();
+  ui_init();
   
   pre_time = millis();
   while(1)
